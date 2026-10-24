@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sincro · Vista del hospital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Diapositiva 16:9 (1920 × 1080) que se ajusta a la ventana. Mismo diseño que la app (diseño C). */
+  :root {
+    --bg: #f8f9fa; --surface: #ffffff; --ink: #212529; --muted: #3d4650; --line: #dee2e6; --line-soft: #e9ecef;
+    --primary: #0168bc; --primary-dark: #01529a; --primary-soft: #e7f1fb; --brand-red: #ed2d3c;
+    --ok: #1d6f45; --ok-soft: #e4f3ea; --warn: #8f4f00; --warn-soft: #fbefdc; --danger: #c41e2e; --danger-soft: #fdecee;
+    --shadow: 0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04); --shadow-md: 0 4px 14px rgba(0,0,0,.08);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #2b3036; }
+  body { display: grid; place-items: center; overflow: hidden; font-family: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--ink); }
+  .slide { width: 1920px; height: 1080px; background: var(--bg); position: relative; transform-origin: center; display: flex; flex-direction: column; padding: 40px 72px 44px; gap: 24px; }
+  svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* Cabecera de la diapositiva */
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 18px; }
+  .brand img { width: 84px; height: 84px; object-fit: contain; }
+  .brand-name { font-size: 40px; font-weight: 700; color: var(--primary); letter-spacing: -0.01em; line-height: 1; }
+  .brand-sub { font-size: 20px; color: var(--muted); font-weight: 600; }
+  .client { text-align: right; }
+  .client-k { font-size: 18px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .client-n { font-size: 30px; font-weight: 700; }
+  .client-tag { display: inline-block; margin-top: 6px; font-size: 16px; font-weight: 700; color: var(--warn); background: var(--warn-soft); border-radius: 999px; padding: 4px 14px; }
+  h1 { margin: 0; font-size: 60px; line-height: 1.05; letter-spacing: -0.015em; }
+  .lede { margin: 10px 0 0; font-size: 26px; color: var(--muted); }
+
+  .main { flex: 1; display: grid; grid-template-columns: 1.55fr 1fr; gap: 40px; min-height: 0; }
+
+  /* Ventana del panel */
+  .window { background: var(--surface); border-radius: 18px; box-shadow: 0 12px 40px rgba(0,0,0,.12); overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--line-soft); }
+  .win-bar { display: flex; align-items: center; gap: 14px; padding: 14px 22px; border-bottom: 1px solid var(--line-soft); background: #fff; }
+  .dots { display: flex; gap: 8px; } .dots span { width: 12px; height: 12px; border-radius: 50%; background: #dee2e6; }
+  .win-title { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .win-title img { width: 30px; height: 30px; object-fit: contain; }
+  .win-title small { font-weight: 600; color: var(--muted); font-size: 17px; }
+  .win-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; background: var(--bg); }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+  .kpi { background: #fff; border: 1px solid var(--line-soft); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); font-size: 17px; font-weight: 600; color: var(--muted); }
+  .kpi b { display: block; font-size: 34px; line-height: 1.05; color: var(--ink); }
+  .kpi.danger b { color: var(--danger); } .kpi.warn b { color: var(--warn); } .kpi.ok b { color: var(--ok); }
+
+  .rows { display: flex; flex-direction: column; gap: 10px; }
+  .row { display: grid; grid-template-columns: 210px 1fr 260px; align-items: center; gap: 16px; background: #fff; border: 1px solid var(--line-soft); border-radius: 12px; padding: 10px 16px; box-shadow: var(--shadow); font-size: 18px; }
+  .row.open { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary), var(--shadow-md); }
+  .who b { display: block; font-size: 19px; } .who span { color: var(--muted); font-size: 16px; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; color: var(--muted); }
+  .badge { border-radius: 999px; padding: 3px 12px; font-weight: 700; font-size: 15px; border: 2px solid; }
+  .b-high { color: var(--danger); background: var(--danger-soft); border-color: var(--danger); }
+  .b-mid { color: var(--warn); background: var(--warn-soft); border-color: var(--warn); }
+  .b-low { color: var(--ok); background: var(--ok-soft); border-color: var(--ok); }
+  .b-alarm { color: #fff; background: var(--danger); border-color: var(--danger); }
+  .tag { background: #f1f3f5; border-radius: 6px; padding: 2px 9px; font-weight: 700; font-size: 15px; color: var(--ink); }
+  .state { text-align: right; font-weight: 700; color: var(--primary); font-size: 17px; }
+  .state.ok { color: var(--ok); } .state.warn { color: var(--warn); } .state.danger { color: var(--danger); }
+
+  .detail { background: #fff; border: 1px solid var(--line-soft); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 24px; font-size: 17px; }
+  .detail h3 { grid-column: 1 / -1; margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+  .detail h3 .ready { font-size: 15px; font-weight: 700; color: var(--ok); background: var(--ok-soft); border-radius: 999px; padding: 2px 12px; }
+  .detail dt { font-weight: 700; color: var(--muted); font-size: 15px; text-transform: uppercase; letter-spacing: .04em; }
+  .detail dd { margin: 2px 0 0; }
+  .quote { grid-column: 1 / -1; font-style: italic; background: var(--primary-soft); border-radius: 10px; padding: 10px 14px; }
+
+  /* Columna de beneficios */
+  .side { display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+  .side h2 { margin: 0; font-size: 34px; }
+  .benefits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .benefit { display: flex; gap: 16px; align-items: flex-start; background: #fff; border: 1px solid var(--line-soft); border-radius: 14px; padding: 13px 18px; box-shadow: var(--shadow); }
+  .ti { width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; }
+  .ti svg.i { width: 26px; height: 26px; }
+  .node svg.i { width: 28px; height: 28px; }
+  .ti-blue { background: #e7f5ff; color: #1864ab; } .ti-red { background: #fff5f5; color: #c92a2a; } .ti-teal { background: #e6fcf5; color: #087f5b; }
+  .ti-orange { background: #fff4e6; color: #c2410c; } .ti-violet { background: #f3f0ff; color: #6741d9; }
+  .benefit b { display: block; font-size: 22px; } .benefit span { font-size: 18px; color: var(--muted); line-height: 1.35; }
+
+  /* Banda inferior: el sistema integrado */
+  .flowband { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--line-soft); border-radius: 16px; padding: 18px 24px; box-shadow: var(--shadow); }
+  .flowband-k { font-size: 18px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: .08em; margin-right: 8px; white-space: nowrap; }
+  .node { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); font-size: 19px; font-weight: 700; flex: 1; }
+  .node small { display: block; font-weight: 400; color: var(--muted); font-size: 15px; }
+  .node.core { background: var(--primary); color: #fff; border-color: var(--primary); } .node.core small { color: #d9ecfb; }
+  .node .ni { font-size: 28px; }
+  .arrow { color: var(--muted); font-size: 26px; }
+  .foot { position: absolute; left: 72px; right: 72px; bottom: 16px; display: flex; justify-content: space-between; font-size: 15px; color: var(--muted); }
+</style>
+</head>
+<body>
+<section class="slide" aria-label="Diapositiva: vista del hospital">
+
+  <header class="top">
+    <div class="brand">
+      <img src="../../public/Logotipo_sanitario_Sincro_en_azul_y_rojo.png" alt="Sincro">
+      <div>
+        <div class="brand-name">Sincro</div>
+        <div class="brand-sub">Citas con triaje previo · sistema integrado</div>
+      </div>
+    </div>
+    <div class="client">
+      <div class="client-k">Propuesta para</div>
+      <div class="client-n">Hospital Universitario de La Princesa</div>
+      <span class="client-tag">Maqueta · datos de ejemplo</span>
+    </div>
+  </header>
+
+  <div>
+    <h1>Así le llegan las citas al hospital</h1>
+    <p class="lede">Cada solicitud llega ordenada por prioridad, con el resumen clínico listo y la cita ya elegida por el paciente.</p>
+  </div>
+
+  <div class="main">
+    <!-- Panel de admisión (lo que ve el personal) -->
+    <div class="window" aria-label="Panel de admisión de ejemplo">
+      <div class="win-bar">
+        <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="win-title">
+          <img src="../../public/Logotipo_sanitario_Sincro_en_azul_y_rojo.png" alt="">
+          Panel de admisión <small>· Hospital La Princesa · Consultas externas</small>
+        </div>
+      </div>
+      <div class="win-body">
+        <div class="kpis">
+          <div class="kpi"><b>42</b>Solicitudes hoy</div>
+          <div class="kpi danger"><b>5</b>Prioridad alta</div>
+          <div class="kpi warn"><b>7</b>Asignar consulta</div>
+          <div class="kpi ok"><b>30</b>Ya citadas por el paciente</div>
+        </div>
+
+        <div class="rows">
+          <div class="row open">
+            <div class="who"><b>Carmen R. P.</b><span>81 años · 08:42</span></div>
+            <div class="tags"><span class="badge b-high">Prioridad alta</span><span class="tag">CAR</span><span class="tag">Primera</span> Palpitaciones, va a peor</div>
+            <div class="state ok">Citada · jue 30 oct, 10:15</div>
+          </div>
+          <div class="row">
+            <div class="who"><b>Rosa J.</b><span>67 años · 09:05</span></div>
+            <div class="tags"><span class="badge b-high">Prioridad alta</span><span class="tag">DIG</span> Pérdida de peso, sangre</div>
+            <div class="state">Pendiente de cita</div>
+          </div>
+          <div class="row">
+            <div class="who"><b>Lucía F.</b><span>34 años · 10:02</span></div>
+            <div class="tags"><span class="badge b-alarm">Señal de alarma</span> Derivada al 112 por la app</div>
+            <div class="state danger">Enviada a Urgencias</div>
+          </div>
+        </div>
+
+        <div class="detail">
+          <h3>Resumen para el médico · Carmen R. P. <span class="ready">Listo antes de la consulta</span></h3>
+          <div><dt>Zona y síntomas</dt><dd>Corazón · palpitaciones, piernas hinchadas</dd></div>
+          <div><dt>Evolución</dt><dd>Semanas · va a peor · molesta bastante</dd></div>
+          <div><dt>Necesidades</dt><dd>Vendrá con un acompañante</dd></div>
+          <div class="quote">«Noto el corazón como si saltara, sobre todo por las noches, y me ahogo un poco al subir la cuesta.»</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cómo ahorra tiempo -->
+    <aside class="side">
+      <h2>Cómo ahorra tiempo al hospital</h2>
+      <ul class="benefits">
+        <li class="benefit">
+          <span class="ti ti-blue"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></span>
+          <div><b>Triaje antes de la llamada</b><span>Las solicitudes llegan ordenadas por prioridad. Las señales de alarma van al 112 sin pasar por admisión.</span></div>
+        </li>
+        <li class="benefit">
+          <span class="ti ti-violet"><svg class="i" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+          <div><b>Resumen clínico ya preparado</b><span>Síntomas, evolución y relato del paciente en una ficha, antes de entrar a consulta.</span></div>
+        </li>
+        <li class="benefit">
+          <span class="ti ti-teal"><svg class="i" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg></span>
+          <div><b>El paciente elige su hora</b><span>Reserva, confirma o cambia la cita desde el móvil, sin llamar a admisión.</span></div>
+        </li>
+        <li class="benefit">
+          <span class="ti ti-orange"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span>
+          <div><b>Huecos que no se pierden</b><span>Si alguien anula, el hueco se ofrece solo al siguiente paciente.</span></div>
+        </li>
+        <li class="benefit">
+          <span class="ti ti-red"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span>
+          <div><b>Necesidades avisadas</b><span>Intérprete, silla de ruedas o acompañante, conocidos antes del día de la cita.</span></div>
+        </li>
+      </ul>
+    </aside>
+  </div>
+
+  <!-- El sistema integrado -->
+  <div class="flowband" aria-label="Cómo se conecta el sistema">
+    <span class="flowband-k">Sistema integrado</span>
+    <div class="node"><svg class="i ni" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg><div>Paciente<small>Web o móvil · 10 idiomas</small></div></div>
+    <span class="arrow" aria-hidden="true">→</span>
+    <div class="node core"><svg class="i ni" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><div>Sincro<small>Triaje, prioridad y agenda</small></div></div>
+    <span class="arrow" aria-hidden="true">→</span>
+    <div class="node"><svg class="i ni" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg><div>Agenda del hospital<small>Conexión con el sistema del centro</small></div></div>
+    <span class="arrow" aria-hidden="true">→</span>
+    <div class="node"><svg class="i ni" viewBox="0 0 24 24"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg><div>Médico<small>Consulta con el resumen listo</small></div></div>
+  </div>
+
+  <div class="foot"><span>Sincro · prototipo</span><span>Pacientes y cifras de ejemplo, no son datos reales del hospital.</span></div>
+</section>
+<script>
+  // Ajusta la diapositiva al tamaño de la ventana (para presentar a pantalla completa con F11)
+  const slide = document.querySelector('.slide');
+  const fit = () => { slide.style.transform = `scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`; };
+  addEventListener('resize', fit); fit();
+</script>
+</body>
+</html>

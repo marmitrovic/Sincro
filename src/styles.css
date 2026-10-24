@@ -700,3 +700,70 @@ p { margin: 0 0 1rem; }
 /* Boton grande de inicio: brilla suavemente unas veces al abrir la app */
 @keyframes cta-glow { 0%, 100% { box-shadow: 0 4px 12px rgba(1, 104, 188, 0.3); } 50% { box-shadow: 0 0 0 8px rgba(1, 104, 188, 0.15), 0 4px 12px rgba(1, 104, 188, 0.3); } }
 .btn-cta.rise { animation: rise 0.35s ease-out 80ms both, cta-glow 2.2s ease-in-out 0.9s 3; }
+
+/* ---------- Tamanos mas compactos y texto secundario mas legible ----------
+   Componentes algo mas pequenos (siempre con al menos 44 px para tocar) y el texto gris
+   de ayuda mas oscuro, para que se lea mejor. */
+:root { --muted: #3d4650; }
+
+/* Titulos */
+h1 { font-size: 1.6rem; }
+.q-title { font-size: 1.45rem; }
+.home-hello .home-title { font-size: 1.6rem; }
+@media (max-width: 560px) { h1, .q-title, .home-hello .home-title { font-size: 1.35rem; } }
+
+/* Texto de ayuda y subtitulos: mas oscuro y un poco mas firme */
+.q-help { color: #343a40; font-size: 1rem; }
+.home-hello .lead { color: #343a40; font-weight: 600; font-size: 1.05rem; }
+.choice-hint, .tile-sub, .day-rel, .save-hint, .progress-text { color: var(--muted); }
+.notice-body .muted, .received-text, .cta-sub { color: #343a40; }
+
+/* Botones */
+.btn { min-height: 2.8rem; padding: 0.6rem 1.2rem; }
+.btn-lg { min-height: 3.1rem; padding: 0.7rem 1.3rem; font-size: 1.05rem; }
+.btn-sm { min-height: 2.5rem; padding: 0.35rem 0.8rem; }
+.btn-cta { min-height: 3rem; font-size: 1.1rem; }
+.listen { min-height: 2.4rem; padding: 0.35rem 0.8rem; font-size: 0.88rem; }
+.navbar-inner { padding-top: 0.6rem; padding-bottom: calc(0.6rem + env(safe-area-inset-bottom)); }
+
+/* Opciones */
+.choices { gap: 0.55rem; }
+.choice { min-height: 3.2rem; padding: 0.6rem 0.85rem; gap: 0.75rem; }
+.choice-icon { font-size: 1.4rem; width: 2rem; }
+.choice-label { font-size: 1rem; }
+.choice-mark { width: 1.55rem; height: 1.55rem; font-size: 0.85rem; }
+
+/* Tres preguntas en una pantalla */
+.mini-q { padding: 0.75rem 0.85rem 0.85rem; margin-bottom: 0.8rem; }
+.mini-q legend { font-size: 1.05rem; }
+.mini-n { width: 1.7rem; height: 1.7rem; font-size: 0.85rem; }
+.seg { gap: 0.4rem; }
+.seg-btn { min-height: 3rem; padding: 0.45rem 0.3rem; font-size: 0.95rem; }
+.seg-icon { font-size: 1.2rem; }
+.seg-faces .seg-btn { min-height: 4.6rem; }
+.seg-faces .seg-icon { font-size: 1.8rem; }
+
+/* Inicio */
+.quick-tile { min-height: 5.2rem; padding: 0.7rem 0.3rem; gap: 0.35rem; }
+.theme-icon { width: 2.3rem; height: 2.3rem; }
+.notice, .received { padding: 0.75rem 0.9rem; }
+
+/* Campos de texto */
+.field { margin-bottom: 1rem; }
+.field input, .field textarea { min-height: 3rem; padding: 0.65rem 0.9rem; font-size: 1.05rem; }
+.input-card { font-size: 1.15rem !important; }
+.dob-group { min-height: 3rem; }
+.dob-group input { font-size: 1.1rem; }
+.tsi { max-width: 17rem; }
+.found { padding: 0.7rem 0.85rem; }
+.doc-box { padding: 0.75rem 0.85rem 0.85rem; }
+
+/* Elegir dia y hora */
+.day { flex-basis: 8rem; min-height: 5rem; padding: 0.65rem; }
+.time { min-height: 2.9rem; font-size: 1.05rem; }
+.times { grid-template-columns: repeat(auto-fill, minmax(5.4rem, 1fr)); }
+
+/* Tarjetas y listas */
+.card { padding: 1rem; }
+.save-opt { min-height: 3.4rem; padding: 0.6rem 0.9rem; }
+.review-row { padding: 0.6rem 0.9rem; }
