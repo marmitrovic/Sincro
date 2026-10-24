@@ -9,7 +9,7 @@ const ORDER = { URGENTE: 0, PREFERENTE: 1, ORDINARIA: 2 };
 const STATUS = {
   PENDIENTE_CITA: 'Pendiente de cita',
   CITADA: 'Citada',
-  EN_REVISION: 'Llamar al paciente / asignar consulta',
+  EN_REVISION: 'Llamar al paciente',
   DERIVADO_URGENCIAS: 'Enviado a 112 / Urgencias',
 };
 
@@ -65,10 +65,14 @@ export default function Staff({ go }) {
         <div className="kpi ok"><span>{k.booked}</span>Citas activas</div>
       </div>
 
-      <div className="filters" role="tablist">
-        <button type="button" className={`chip ${filter === 'ALL' ? 'is-selected' : ''}`} onClick={() => setFilter('ALL')}>Todas</button>
+      <div className="filters" role="group" aria-label="Filtrar por especialidad">
+        <button type="button" className={`chip ${filter === 'ALL' ? 'is-selected' : ''}`} aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>
+          Todas<span className="chip-count">{k.total}</span>
+        </button>
         {Object.values(SPECIALTIES).map((s) => (
-          <button key={s.code} type="button" className={`chip ${filter === s.code ? 'is-selected' : ''}`} onClick={() => setFilter(s.code)}>{s.icon} {s.name}</button>
+          <button key={s.code} type="button" className={`chip ${filter === s.code ? 'is-selected' : ''}`} aria-pressed={filter === s.code} onClick={() => setFilter(s.code)}>
+            {s.name}<span className="chip-count">{state.triages.filter((t) => t.result.specialty === s.code).length}</span>
+          </button>
         ))}
       </div>
 
@@ -86,50 +90,70 @@ export default function Staff({ go }) {
           const appt = state.appointments.find((a) => a.id === t.apptId);
           const ans = t.answers;
           const isOpen = open === t.id;
+          const spec = SPECIALTIES[r.specialty];
+          const color = r.emergency ? 'var(--danger)' : info.color;
+          const soft = r.emergency ? 'var(--danger-soft)' : info.soft;
           return (
-            <article key={t.id} className={`card staff-card ${r.emergency ? 'is-emergency' : ''}`} style={{ borderLeftColor: r.emergency ? 'var(--danger)' : info.color }}>
+            <article key={t.id} className={`card staff-card ${r.emergency ? 'is-emergency' : ''} ${isOpen ? 'is-open' : ''}`} style={{ '--prio': color, '--prio-soft': soft }}>
               <button type="button" className="staff-row" onClick={() => setOpen(isOpen ? null : t.id)} aria-expanded={isOpen}>
+                <span className="staff-score"><b>{r.score ?? '—'}</b>puntos</span>
                 <div className="staff-who">
                   <strong>{t.patient.name}</strong>
-                  <span className="muted">{t.patient.age} años{t.patient.card ? ` · TSI ${formatCard(t.patient.card)}` : ''} · {new Date(t.createdAt).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  <span className="muted">{t.patient.age} años · {new Date(t.createdAt).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div className="staff-tags">
-                  {r.emergency ? <span className="badge badge-danger">SEÑAL DE ALARMA</span> : <PriorityBadge priority={r.priority} tr={tEs} />}
-                  {r.specialty && SPECIALTIES[r.specialty] && <span className="tag">{SPECIALTIES[r.specialty].code}</span>}
-                  {r.specialty === 'UNK' && <span className="tag tag-warn">Asignar consulta</span>}
-                  <span className="tag">{r.visitType === 'S' ? 'Sucesiva' : 'Primera'}</span>
-                  <span className="tag">Puntos: {r.score ?? '—'}</span>
+                  {r.emergency ? <span className="badge badge-danger">Señal de alarma</span> : <PriorityBadge priority={r.priority} tr={tEs} />}
+                  <span className="staff-spec">
+                    {spec ? <strong>{spec.name}</strong> : <strong className="is-warn">Asignar consulta</strong>} · {r.visitType === 'S' ? 'Sucesiva' : 'Primera'}
+                  </span>
                 </div>
-                <div className="staff-status">
-                  {appt ? `Cita: ${niceDate(appt.slot.date, 'es-ES')} ${appt.slot.time}` : STATUS[t.status]}
+                <div className={`staff-status ${appt ? 'is-booked' : t.status === 'EN_REVISION' ? 'is-call' : ''}`}>
+                  {appt ? `Cita ${niceDate(appt.slot.date, 'es-ES')}, ${appt.slot.time}` : STATUS[t.status]}
                 </div>
+                <span className="staff-chevron" aria-hidden="true" />
               </button>
               {isOpen && (
                 <div className="staff-detail">
-                  <h3>Resumen para el médico</h3>
-                  <dl>
-                    <dt>Zona</dt><dd>{AREAS.find((z) => z.id === ans.area)?.label || '—'}</dd>
-                    <dt>Síntomas</dt><dd>{(SYMPTOMS[ans.area] || []).filter((s) => ans.symptoms?.includes(s.id)).map((s) => s.label).join(' · ') || '—'}</dd>
-                    <dt>Relato del paciente</dt><dd className="quote">{ans.text || '—'}</dd>
-                    <dt>Duración</dt><dd>{DURATIONS.find((d) => d.id === ans.duration)?.label || '—'}</dd>
-                    <dt>Evolución</dt><dd>{EVOLUTION.find((d) => d.id === ans.evolution)?.label || '—'}</dd>
-                    <dt>Intensidad</dt><dd>{INTENSITY.find((d) => d.id === ans.intensity)?.label || '—'}</dd>
-                    <dt>Señales de alarma</dt><dd>{ans.redFlags?.length ? ans.redFlags.map((f) => RED_FLAGS.find((x) => x.id === f)?.label).join(' · ') : 'Ninguna'}</dd>
-                    <dt>Necesidades</dt><dd>{(ans.access || []).map((x) => ACCESSIBILITY.find((y) => y.id === x)?.label).join(' · ') || '—'}</dd>
-                    <dt>Idioma del paciente</dt><dd>{ans.lang ? `${langInfo(ans.lang).name}${ans.lang !== 'es' ? ' (el relato puede estar en este idioma)' : ''}` : 'Español'}</dd>
-                    <dt>Documento</dt><dd>{ans.docNumber ? `${tEs(`doc.${ans.docType}`)} ${ans.docNumber}` : '—'}</dd>
-                    <dt>Fecha de nacimiento</dt><dd>{ans.dob ? formatDob(ans.dob) : 'No indicada'}</dd>
-                    <dt>Avisos por</dt>
-                    <dd>
-                      <ul>
-                        {(ans.contacts || (ans.contact ? [ans.contact] : [])).map((id) => {
-                          const detail = { SMS: ans.phone, LLAMADA: ans.phone, EMAIL: ans.email, CARTA: ans.address }[id];
-                          return <li key={id}>{CONTACT.find((c) => c.id === id)?.label}{detail ? `: ${detail}` : ''}</li>;
-                        })}
-                      </ul>
-                    </dd>
-                    <dt>Motivos de prioridad</dt><dd><ul>{r.reasons.map((x, k) => <li key={k}>{formatReason(tEs, x)}</li>)}</ul></dd>
-                  </dl>
+                  {ans.text && (
+                    <blockquote className="staff-quote">
+                      <p>«{ans.text}»</p>
+                      {ans.lang && ans.lang !== 'es' && <footer>Relato original en {langInfo(ans.lang).name}</footer>}
+                    </blockquote>
+                  )}
+                  <div className="staff-cols">
+                    <section>
+                      <h3>Clínico</h3>
+                      <dl>
+                        <dt>Zona</dt><dd>{AREAS.find((z) => z.id === ans.area)?.label || '—'}</dd>
+                        <dt>Síntomas</dt><dd>{(SYMPTOMS[ans.area] || []).filter((s) => ans.symptoms?.includes(s.id)).map((s) => s.label).join(' · ') || '—'}</dd>
+                        <dt>Duración</dt><dd>{DURATIONS.find((d) => d.id === ans.duration)?.label || '—'}</dd>
+                        <dt>Evolución</dt><dd>{EVOLUTION.find((d) => d.id === ans.evolution)?.label || '—'}</dd>
+                        <dt>Intensidad</dt><dd>{INTENSITY.find((d) => d.id === ans.intensity)?.label || '—'}</dd>
+                        <dt>Alarma</dt><dd>{ans.redFlags?.length ? ans.redFlags.map((f) => RED_FLAGS.find((x) => x.id === f)?.label).join(' · ') : 'Ninguna'}</dd>
+                      </dl>
+                      <h3>Motivos de prioridad</h3>
+                      <ul>{r.reasons.map((x, i) => <li key={i}>{formatReason(tEs, x)}</li>)}</ul>
+                    </section>
+                    <section>
+                      <h3>Paciente</h3>
+                      <dl>
+                        <dt>Tarjeta (TSI)</dt><dd>{t.patient.card ? formatCard(t.patient.card) : '—'}</dd>
+                        <dt>Documento</dt><dd>{ans.docNumber ? `${tEs(`doc.${ans.docType}`)} ${ans.docNumber}` : '—'}</dd>
+                        <dt>Nacimiento</dt><dd>{ans.dob ? formatDob(ans.dob) : 'No indicada'}</dd>
+                        <dt>Idioma</dt><dd>{ans.lang ? langInfo(ans.lang).name : 'Español'}</dd>
+                        <dt>Necesidades</dt><dd>{(ans.access || []).map((x) => ACCESSIBILITY.find((y) => y.id === x)?.label).join(' · ') || '—'}</dd>
+                        <dt>Avisos por</dt>
+                        <dd>
+                          <ul>
+                            {(ans.contacts || (ans.contact ? [ans.contact] : [])).map((id) => {
+                              const detail = { SMS: ans.phone, LLAMADA: ans.phone, EMAIL: ans.email, CARTA: ans.address }[id];
+                              return <li key={id}>{CONTACT.find((c) => c.id === id)?.label}{detail ? `: ${detail}` : ''}</li>;
+                            })}
+                          </ul>
+                        </dd>
+                      </dl>
+                    </section>
+                  </div>
                 </div>
               )}
             </article>
